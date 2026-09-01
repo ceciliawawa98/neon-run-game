@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>2028 NEON RUN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Chakra+Petch:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #05070C;
+    --bg2: #0A0E17;
+    --grid: rgba(76,243,255,0.16);
+    --cyan: #4CF3FF;
+    --magenta: #B14EFF;
+    --warn: #FF3D6E;
+    --text: #E8F1FF;
+    --dim: rgba(232,241,255,0.55);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family:'Chakra Petch', sans-serif;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 20px 14px;
+  }
+  .wrap{
+    width:100%;
+    max-width: 480px;
+  }
+  .eyebrow{
+    font-family:'Chakra Petch', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--magenta);
+    text-align:center;
+    margin-bottom: 6px;
+  }
+  h1{
+    font-family:'Orbitron', sans-serif;
+    font-weight: 800;
+    font-size: 30px;
+    text-align:center;
+    letter-spacing: 0.04em;
+    color: var(--cyan);
+    text-shadow: 0 0 14px rgba(76,243,255,0.55), 0 0 2px #fff;
+    margin-bottom: 4px;
+  }
+  .sub{
+    text-align:center;
+    font-size: 12px;
+    color: var(--dim);
+    margin-bottom: 16px;
+    letter-spacing: 0.04em;
+  }
+
+  .game-frame{
+    position:relative;
+    border-radius: 14px;
+    overflow:hidden;
+    border: 1px solid rgba(76,243,255,0.35);
+    box-shadow: 0 0 0 1px rgba(177,78,255,0.15), 0 25px 60px rgba(0,0,0,0.6), inset 0 0 40px rgba(76,243,255,0.05);
+    background: var(--bg2);
+  }
+  canvas{
+    display:block;
+    width:100%;
+    height:auto;
+    touch-action: manipulation;
+  }
+
+  .hud{
+    position:absolute;
+    top:0; left:0; right:0;
+    display:flex;
+    justify-content:space-between;
+    padding: 10px 14px;
+    font-family:'Chakra Petch', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--cyan);
+    text-shadow: 0 0 8px rgba(76,243,255,0.6);
+    pointer-events:none;
+    z-index: 3;
+  }
+  .hud .best{ color: var(--magenta); text-shadow: 0 0 8px rgba(177,78,255,0.6); }
+
+  .overlay{
+    position:absolute; inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    background: radial-gradient(120% 120% at 50% 30%, rgba(10,14,23,0.75), rgba(5,7,12,0.94));
+    z-index: 4;
+    padding: 20px;
+  }
+  .overlay.hidden{ display:none; }
+  .glitch-title{
+    font-family:'Orbitron', sans-serif;
+    font-weight: 800;
+    font-size: 26px;
+    color: var(--text);
+    text-shadow: 2px 0 var(--magenta), -2px 0 var(--cyan);
+    margin-bottom: 10px;
+    letter-spacing: 0.03em;
+  }
+  .overlay p{
+    font-size: 12.5px;
+    color: var(--dim);
+    line-height: 1.8;
+    max-width: 300px;
+    margin-bottom: 18px;
+  }
+  .overlay .stat{
+    font-family:'Orbitron', sans-serif;
+    font-size: 42px;
+    color: var(--cyan);
+    text-shadow: 0 0 16px rgba(76,243,255,0.6);
+    margin: 4px 0 2px;
+  }
+  .overlay .stat-label{
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--dim);
+    margin-bottom: 16px;
+  }
+  .play-btn{
+    font-family:'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    padding: 13px 30px;
+    border-radius: 999px;
+    border: 1px solid var(--cyan);
+    background: linear-gradient(90deg, rgba(76,243,255,0.18), rgba(177,78,255,0.18));
+    color: var(--text);
+    cursor:pointer;
+    transition: transform .15s ease, box-shadow .15s ease;
+    box-shadow: 0 0 18px rgba(76,243,255,0.25);
+  }
+  .play-btn:hover{ transform: translateY(-2px); box-shadow: 0 0 26px rgba(76,243,255,0.45); }
+  .play-btn:active{ transform: translateY(0); }
+
+  .cta{
+    margin-top: 14px;
+    text-align:center;
+    font-size: 11.5px;
+    color: var(--dim);
+    letter-spacing: 0.04em;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="eyebrow">SYSTEM ONLINE · YEAR 2028</div>
+  <h1>NEON RUN</h1>
+  <div class="sub">點擊畫面或按空白鍵，躲過所有雷射柵欄</div>
+
+  <div class="game-frame">
+    <div class="hud">
+      <span>距離 <span id="hud-dist">0</span> m</span>
+      <span class="best">最佳 <span id="hud-best">0</span> m</span>
+    </div>
+    <canvas id="game" width="480" height="270"></canvas>
+
+    <div class="overlay" id="overlay-start">
+      <div class="glitch-title">2028年，你能撐多久？</div>
+      <p>系統偵測到前方軌道異常。啟動跳躍程式，閃避所有障礙，看看你能在未來跑道上撐多遠。</p>
+      <button class="play-btn" id="btn-start">啟動 START</button>
+    </div>
+
+    <div class="overlay hidden" id="overlay-end">
+      <div class="glitch-title">連線中斷</div>
+      <div class="stat" id="end-dist">0</div>
+      <div class="stat-label">METERS SURVIVED</div>
+      <button class="play-btn" id="btn-retry">重新連線</button>
+    </div>
+  </div>
+  <div class="cta">留言分享你的距離，看誰是 2028 生存王者 ⚡</div>
+</div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const GROUND_Y = H - 34;
+
+const overlayStart = document.getElementById('overlay-start');
+const overlayEnd = document.getElementById('overlay-end');
+const hudDist = document.getElementById('hud-dist');
+const hudBest = document.getElementById('hud-best');
+const endDist = document.getElementById('end-dist');
+
+let best = parseInt(localStorage.getItem('neonRunBest') || '0', 10);
+hudBest.textContent = best;
+
+let player, obstacles, particles, gridOffset, speed, distance, running, spawnTimer, elapsed;
+
+function resetGame(){
+  player = { x: 64, y: GROUND_Y - 22, w: 22, h: 22, vy: 0, jumping:false, trail:[] };
+  obstacles = [];
+  particles = [];
+  gridOffset = 0;
+  speed = 4.2;
+  distance = 0;
+  spawnTimer = 0;
+  elapsed = 0;
+  running = true;
+}
+
+function jump(){
+  if(!running) return;
+  if(!player.jumping){
+    player.vy = -12.5;
+    player.jumping = true;
+    for(let i=0;i<6;i++){
+      particles.push({x:player.x+player.w/2, y:player.y+player.h, vx:(Math.random()-0.5)*2, vy:Math.random()*1.5, life:20, color:'cyan'});
+    }
+  }
+}
+
+function spawnObstacle(){
+  const h = 22 + Math.random()*26;
+  obstacles.push({ x: W + 10, y: GROUND_Y - h, w: 14, h: h, hue: Math.random() > 0.5 ? 'warn' : 'magenta' });
+}
+
+function update(){
+  elapsed += 1;
+  speed = 4.2 + Math.min(5, elapsed/420);
+  distance += speed * 0.045;
+  hudDist.textContent = Math.floor(distance);
+
+  gridOffset -= speed;
+  if(gridOffset <= -40) gridOffset = 0;
+
+  player.vy += 0.75;
+  player.y += player.vy;
+  if(player.y >= GROUND_Y - player.h){
+    player.y = GROUND_Y - player.h;
+    player.vy = 0;
+    player.jumping = false;
+  }
+  player.trail.push({x:player.x, y:player.y+player.h/2});
+  if(player.trail.length > 8) player.trail.shift();
+
+  spawnTimer -= 1;
+  if(spawnTimer <= 0){
+    spawnObstacle();
+    spawnTimer = Math.max(38, 75 - elapsed/12);
+  }
+
+  obstacles.forEach(o => o.x -= speed);
+  obstacles = obstacles.filter(o => o.x + o.w > -10);
+
+  particles.forEach(p=>{ p.x += p.vx; p.y += p.vy; p.life -= 1; });
+  particles = particles.filter(p => p.life > 0);
+
+  for(const o of obstacles){
+    if(player.x < o.x + o.w && player.x + player.w > o.x &&
+       player.y < o.y + o.h && player.y + player.h > o.y){
+      gameOver();
+      break;
+    }
+  }
+}
+
+function drawGrid(){
+  ctx.fillStyle = '#0A0E17';
+  ctx.fillRect(0,0,W,H);
+
+  ctx.strokeStyle = 'rgba(76,243,255,0.12)';
+  ctx.lineWidth = 1;
+  for(let x = gridOffset; x < W; x += 40){
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.moveTo(0, GROUND_Y+2); ctx.lineTo(W, GROUND_Y+2);
+  ctx.strokeStyle = 'rgba(76,243,255,0.5)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  const grad = ctx.createLinearGradient(0, GROUND_Y, 0, H);
+  grad.addColorStop(0, 'rgba(76,243,255,0.08)');
+  grad.addColorStop(1, 'rgba(76,243,255,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, GROUND_Y, W, H-GROUND_Y);
+}
+
+function drawPlayer(){
+  player.trail.forEach((t,i)=>{
+    ctx.globalAlpha = (i/player.trail.length) * 0.25;
+    ctx.fillStyle = '#4CF3FF';
+    ctx.fillRect(t.x, t.y-4, 8, 8);
+  });
+  ctx.globalAlpha = 1;
+
+  ctx.save();
+  ctx.translate(player.x + player.w/2, player.y + player.h/2);
+  ctx.rotate(Math.PI/4);
+  ctx.fillStyle = '#4CF3FF';
+  ctx.shadowColor = '#4CF3FF';
+  ctx.shadowBlur = 16;
+  ctx.fillRect(-player.w/2, -player.h/2, player.w, player.h);
+  ctx.restore();
+  ctx.shadowBlur = 0;
+}
+
+function drawObstacles(){
+  obstacles.forEach(o=>{
+    const color = o.hue === 'warn' ? '#FF3D6E' : '#B14EFF';
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 14;
+    ctx.fillRect(o.x, o.y, o.w, o.h);
+    ctx.shadowBlur = 0;
+  });
+}
+
+function drawParticles(){
+  particles.forEach(p=>{
+    ctx.globalAlpha = p.life/20;
+    ctx.fillStyle = '#4CF3FF';
+    ctx.fillRect(p.x, p.y, 3, 3);
+  });
+  ctx.globalAlpha = 1;
+}
+
+function loop(){
+  if(running){
+    update();
+    drawGrid();
+    drawObstacles();
+    drawPlayer();
+    drawParticles();
+    requestAnimationFrame(loop);
+  }
+}
+
+function gameOver(){
+  running = false;
+  const finalDist = Math.floor(distance);
+  if(finalDist > best){
+    best = finalDist;
+    localStorage.setItem('neonRunBest', best);
+  }
+  hudBest.textContent = best;
+  endDist.textContent = finalDist;
+  overlayEnd.classList.remove('hidden');
+}
+
+function startGame(){
+  overlayStart.classList.add('hidden');
+  overlayEnd.classList.add('hidden');
+  resetGame();
+  drawGrid();
+  requestAnimationFrame(loop);
+}
+
+document.getElementById('btn-start').addEventListener('click', startGame);
+document.getElementById('btn-retry').addEventListener('click', startGame);
+canvas.addEventListener('mousedown', jump);
+canvas.addEventListener('touchstart', (e)=>{ e.preventDefault(); jump(); }, {passive:false});
+window.addEventListener('keydown', (e)=>{ if(e.code === 'Space'){ e.preventDefault(); jump(); } });
+
+drawGrid();
+</script>
+</body>
+</html>
